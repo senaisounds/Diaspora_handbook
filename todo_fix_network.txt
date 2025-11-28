@@ -1,0 +1,4 @@
+- [x] Add NSAppTransportSecurity to iOS Info.plist
+- [x] Add network.client entitlement to macOS DebugProfile.entitlements
+- [ ] Verify if data is locally stored (Already confirmed)
+
