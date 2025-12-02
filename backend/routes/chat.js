@@ -48,8 +48,8 @@ router.post('/channels', async (req, res) => {
     
     await db.run(
       `INSERT INTO channels (id, name, description, icon, emoji, is_announcement, member_count, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, 0, datetime('now'))`,
-      [id, name, description, icon, emoji, isAnnouncement ? 1 : 0]
+       VALUES (?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)`,
+      [id, name, description, icon, emoji, isAnnouncement ? (db.isPostgres ? true : 1) : (db.isPostgres ? false : 0)]
     );
     
     const channel = await db.get('SELECT * FROM channels WHERE id = ?', [id]);
@@ -120,7 +120,7 @@ router.post('/users', async (req, res) => {
         
         await db.run(
           `INSERT INTO users (id, username, device_id, created_at)
-           VALUES (?, ?, ?, datetime('now'))`,
+           VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
           [id, uniqueUsername, deviceId]
         );
         
@@ -131,7 +131,7 @@ router.post('/users', async (req, res) => {
         
         await db.run(
           `INSERT INTO users (id, username, device_id, created_at)
-           VALUES (?, ?, ?, datetime('now'))`,
+           VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
           [id, username, deviceId]
         );
         
@@ -165,7 +165,7 @@ router.post('/channels/:id/join', async (req, res) => {
     if (!existing) {
       await db.run(
         `INSERT INTO channel_members (channel_id, user_id, joined_at)
-         VALUES (?, ?, datetime('now'))`,
+         VALUES (?, ?, CURRENT_TIMESTAMP)`,
         [channelId, userId]
       );
       
