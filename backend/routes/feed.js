@@ -117,12 +117,12 @@ router.post('/:id/like', authenticate, async (req, res) => {
     if (existingLike) {
       // Unlike
       await db.run('DELETE FROM post_likes WHERE post_id = ? AND user_id = ?', [postId, userId]);
-      await db.run('UPDATE posts SET likes_count = likes_count - 1 WHERE id = ?', [postId]);
+      await db.run('UPDATE posts SET likes_count = COALESCE(likes_count, 0) - 1 WHERE id = ?', [postId]);
       res.json({ liked: false });
     } else {
       // Like
       await db.run('INSERT INTO post_likes (post_id, user_id) VALUES (?, ?)', [postId, userId]);
-      await db.run('UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?', [postId]);
+      await db.run('UPDATE posts SET likes_count = COALESCE(likes_count, 0) + 1 WHERE id = ?', [postId]);
       res.json({ liked: true });
     }
   } catch (error) {
