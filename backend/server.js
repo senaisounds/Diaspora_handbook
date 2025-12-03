@@ -23,6 +23,10 @@ if (process.env.SENTRY_DSN) {
 const app = express();
 const server = http.createServer(app);
 
+// Trust proxy (required for Render and other reverse proxies)
+// This allows Express to correctly identify client IPs behind a proxy
+app.set('trust proxy', 1);
+
 // Environment configuration
 const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
