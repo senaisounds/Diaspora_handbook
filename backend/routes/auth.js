@@ -6,6 +6,7 @@ const db = require('../database/db');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const StorageService = require('../services/storage');
 
 // Configure multer for storage
 const storage = multer.diskStorage({
@@ -88,9 +89,18 @@ router.post('/register', upload.single('avatar'), async (req, res) => {
     // Determine avatar URL
     let avatarUrl = null;
     if (req.file) {
-      // Assuming server runs on port 3000
-      // In production, use env var for base URL
-      avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      // Upload to Supabase Storage (or fallback to local)
+      const fileName = `avatar_${Date.now()}_${Math.round(Math.random() * 1E9)}${path.extname(req.file.originalname)}`;
+      avatarUrl = await StorageService.uploadFile(
+        req.file.path,
+        'avatars',
+        fileName,
+        req.file.mimetype
+      );
+      // Clean up local file if uploaded to Supabase
+      if (avatarUrl.includes('supabase.co')) {
+        fs.unlinkSync(req.file.path);
+      }
     }
 
     // Insert user
@@ -241,19 +251,27 @@ router.put('/profile', authenticate, upload.single('avatar'), async (req, res) =
     let params = [instagram, habeshaStatus];
 
     if (req.file) {
-      const newAvatarUrl = `/uploads/avatars/${req.file.filename}`;
+      // Upload new avatar to Supabase Storage (or fallback to local)
+      const fileName = `avatar_${Date.now()}_${Math.round(Math.random() * 1E9)}${path.extname(req.file.originalname)}`;
+      const newAvatarUrl = await StorageService.uploadFile(
+        req.file.path,
+        'avatars',
+        fileName,
+        req.file.mimetype
+      );
       updateQuery += ', avatar_url = ?';
       params.push(newAvatarUrl);
-
-      // Delete old avatar if it exists and is a local file
-      if (currentUser && currentUser.avatar_url && currentUser.avatar_url.startsWith('/uploads')) {
-        const oldAvatarPath = path.join(__dirname, '..', currentUser.avatar_url);
-        if (fs.existsSync(oldAvatarPath)) {
-          try {
-            fs.unlinkSync(oldAvatarPath);
-          } catch (err) {
-            console.error('Failed to delete old avatar:', err);
-          }
+      
+      // Clean up local file if uploaded to Supabase
+      if (newAvatarUrl.includes('supabase.co')) {
+        fs.unlinkSync(req.file.path);
+      }
+      
+      // Delete old avatar (works for both Supabase and local)
+      if (currentUser && currentUser.avatar_url) {
+        const oldFileName = StorageService.extractFileName(currentUser.avatar_url);
+        if (oldFileName) {
+          await StorageService.deleteFile('avatars', oldFileName);
         }
       }
     }

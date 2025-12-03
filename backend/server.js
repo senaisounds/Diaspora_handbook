@@ -9,6 +9,17 @@ const { Server } = require('socket.io');
 const db = require('./database/db');
 require('dotenv').config();
 
+// Initialize Sentry for error tracking (optional - only if SENTRY_DSN is set)
+let Sentry;
+if (process.env.SENTRY_DSN) {
+  Sentry = require('@sentry/node');
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: 1.0, // Capture 100% of transactions for performance monitoring
+  });
+}
+
 const app = express();
 const server = http.createServer(app);
 
@@ -131,6 +142,11 @@ app.use((req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
+  
+  // Send to Sentry if configured
+  if (Sentry) {
+    Sentry.captureException(err);
+  }
   
   // CORS error
   if (err.message === 'Not allowed by CORS') {
@@ -273,12 +289,18 @@ async function startServer() {
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\nShutting down gracefully...');
+  if (Sentry) {
+    await Sentry.close(2000); // Wait up to 2 seconds for Sentry to flush
+  }
   await db.close();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('\nShutting down gracefully...');
+  if (Sentry) {
+    await Sentry.close(2000); // Wait up to 2 seconds for Sentry to flush
+  }
   await db.close();
   process.exit(0);
 });
