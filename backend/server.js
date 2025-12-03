@@ -75,8 +75,8 @@ app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: NODE_ENV === 'production' ? 100 : 1000, // Limit each IP to 100 requests per windowMs in production
+  windowMs: 1 * 60 * 1000, // 1 minute (reduced from 15 min)
+  max: NODE_ENV === 'production' ? 300 : 1000, // Increased to 300 requests per minute (5 requests per second)
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
