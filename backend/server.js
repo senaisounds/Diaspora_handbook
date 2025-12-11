@@ -32,7 +32,7 @@ const PORT = process.env.PORT || 3000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
-  : (NODE_ENV === 'production' ? [] : '*');
+  : '*'; // Default to '*' if not set (development or fallback)
 
 // Socket.io configuration with CORS
 const io = new Server(server, {
@@ -65,7 +65,7 @@ const corsOptions = {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    if (ALLOWED_ORIGINS === '*' || ALLOWED_ORIGINS.includes(origin)) {
+    if (ALLOWED_ORIGINS === '*' || ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
