@@ -65,7 +65,7 @@ const corsOptions = {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
     
-    if (ALLOWED_ORIGINS === '*' || ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin)) {
+    if (ALLOWED_ORIGINS === '*' || (Array.isArray(ALLOWED_ORIGINS) && ALLOWED_ORIGINS.includes('*')) || (Array.isArray(ALLOWED_ORIGINS) && ALLOWED_ORIGINS.includes(origin))) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
